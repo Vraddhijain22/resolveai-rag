@@ -29,7 +29,10 @@ while True:
 
     result = rag_graph.invoke(
         {
-            "question": question
+            "question": question,
+            "results": [],
+            "answer": "",
+            "sources": []
         }
     )
 
@@ -39,3 +42,14 @@ while True:
     print("=" * 70)
 
     print(result["answer"])
+
+
+    if result["sources"]:
+
+        print("\n" + "=" * 70)
+        print("SOURCES")
+        print("=" * 70)
+
+        for source in result["sources"]:
+
+            print(f"- {source}")

@@ -15,6 +15,7 @@ class RAGState(TypedDict):
     question: str
     results: list
     answer: str
+    sources: list[str]
 
 
 def retrieve_node(state: RAGState):
@@ -59,8 +60,31 @@ def generate_node(state: RAGState):
         state["results"]
     )
 
+    sources = []
+
+    # Only attach sources when the LLM actually provides
+    # a knowledge-based answer.
+    insufficient_message = (
+        "I couldn't find sufficient information in the "
+        "available company knowledge base."
+    )
+
+    if answer.strip() != insufficient_message:
+
+        for result in state["results"]:
+
+            source = (
+                f"{result.payload['source']}, "
+                f"Page {result.payload['page']}"
+            )
+
+            if source not in sources:
+
+                sources.append(source)
+
     return {
-        "answer": answer
+        "answer": answer,
+        "sources": sources
     }
 
 
@@ -70,7 +94,8 @@ def reject_node(state: RAGState):
         "answer": (
             "I couldn't find sufficient information in the "
             "available company knowledge base."
-        )
+        ),
+        "sources": []
     }
 
 
