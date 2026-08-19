@@ -1,22 +1,41 @@
 from app.graph.rag_graph import rag_graph
 
 
-question = "How do I fix VPN after changing my password?"
-
-
-result = rag_graph.invoke(
-    {
-        "question": question
-    }
-)
-
-
 print("\n" + "=" * 70)
-print("RESOLVEAI - LANGGRAPH TEST")
+print("RESOLVEAI - LANGGRAPH KNOWLEDGE ASSISTANT")
 print("=" * 70)
 
-print("\nQuestion:")
-print(result["question"])
+print("\nType 'exit' to quit.")
 
-print("\nAnswer:")
-print(result["answer"])
+
+while True:
+
+    question = input("\nAsk your question: ").strip()
+
+
+    if question.lower() == "exit":
+
+        print("\nGoodbye!")
+
+        break
+
+
+    if not question:
+
+        print("Please enter a question.")
+
+        continue
+
+
+    result = rag_graph.invoke(
+        {
+            "question": question
+        }
+    )
+
+
+    print("\n" + "=" * 70)
+    print("ANSWER")
+    print("=" * 70)
+
+    print(result["answer"])

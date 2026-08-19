@@ -8,6 +8,9 @@ from app.rag.rag_pipeline import (
 )
 
 
+RELEVANCE_THRESHOLD = 0.60
+
+
 class RAGState(TypedDict):
     question: str
     results: list
@@ -15,7 +18,7 @@ class RAGState(TypedDict):
 
 
 def retrieve_node(state: RAGState):
-#It performs retrieval.
+
     results = retrieve_documents(
         state["question"]
     )
@@ -25,8 +28,32 @@ def retrieve_node(state: RAGState):
     }
 
 
+def check_relevance_node(state: RAGState):
+
+    results = state["results"]
+
+    relevant_results = [
+        result
+        for result in results
+        if result.score >= RELEVANCE_THRESHOLD
+    ]
+
+    return {
+        "results": relevant_results
+    }
+
+
+def route_after_relevance(state: RAGState):
+
+    if state["results"]:
+
+        return "generate"
+
+    return "reject"
+
+
 def generate_node(state: RAGState):
-#It generates the answer.
+
     answer = generate_answer(
         state["question"],
         state["results"]
@@ -34,6 +61,16 @@ def generate_node(state: RAGState):
 
     return {
         "answer": answer
+    }
+
+
+def reject_node(state: RAGState):
+
+    return {
+        "answer": (
+            "I couldn't find sufficient information in the "
+            "available company knowledge base."
+        )
     }
 
 
@@ -46,8 +83,18 @@ builder.add_node(
 )
 
 builder.add_node(
+    "check_relevance",
+    check_relevance_node
+)
+
+builder.add_node(
     "generate",
     generate_node
+)
+
+builder.add_node(
+    "reject",
+    reject_node
 )
 
 
@@ -58,11 +105,27 @@ builder.add_edge(
 
 builder.add_edge(
     "retrieve",
-    "generate"
+    "check_relevance"
 )
+
+
+builder.add_conditional_edges(
+    "check_relevance",
+    route_after_relevance,
+    {
+        "generate": "generate",
+        "reject": "reject",
+    }
+)
+
 
 builder.add_edge(
     "generate",
+    END
+)
+
+builder.add_edge(
+    "reject",
     END
 )
 
