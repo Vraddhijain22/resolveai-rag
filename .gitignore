@@ -37,3 +37,6 @@ build/
 
 # Ollama/local model files
 *.gguf
+
+# Local Qdrant database
+data/qdrant/
