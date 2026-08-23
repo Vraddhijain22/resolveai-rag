@@ -1,6 +1,7 @@
 from typing import TypedDict
 
 from langgraph.graph import StateGraph, START, END
+from app.config import RELEVANCE_THRESHOLD
 
 from app.rag.rag_pipeline import (
     retrieve_documents,
@@ -8,7 +9,7 @@ from app.rag.rag_pipeline import (
 )
 
 
-RELEVANCE_THRESHOLD = 0.60
+#RELEVANCE_THRESHOLD = 0.60
 
 
 class RAGState(TypedDict):

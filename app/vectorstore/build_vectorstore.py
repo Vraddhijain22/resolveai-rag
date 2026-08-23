@@ -1,18 +1,16 @@
-from pathlib import Path
-
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, PointStruct, VectorParams
+
+from app.config import (
+    DOCUMENTS_FOLDER,
+    VECTORSTORE_FOLDER,
+    COLLECTION_NAME,
+    VECTOR_SIZE,
+)
 
 from app.embeddings.embedder import embeddings
 from app.rag.document_loader import load_pdf
 from app.rag.chunker import chunk_text
-
-
-DOCUMENTS_FOLDER = Path("data/documents")
-
-VECTORSTORE_FOLDER = Path("data/qdrant")
-
-COLLECTION_NAME = "policy_documents"
 
 
 pdf_files = list(DOCUMENTS_FOLDER.glob("*.pdf"))
@@ -30,7 +28,7 @@ if not client.collection_exists(COLLECTION_NAME):
     client.create_collection(
         collection_name=COLLECTION_NAME,
         vectors_config=VectorParams(
-            size=768,
+            size=VECTOR_SIZE,
             distance=Distance.COSINE
         )
     )
