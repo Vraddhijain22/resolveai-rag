@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.graph.rag_graph import rag_graph
 
@@ -12,13 +12,21 @@ app = FastAPI(
 
 
 class QuestionRequest(BaseModel):
+    question: str = Field(
+        ...,
+        min_length=1,
+        description="Question to ask the enterprise knowledge assistant"
+    )
 
+
+class AskResponse(BaseModel):
     question: str
+    answer: str
+    sources: list[str]
 
 
 @app.get("/")
 def root():
-
     return {
         "message": "ResolveAI API is running!"
     }
@@ -26,13 +34,15 @@ def root():
 
 @app.get("/health")
 def health():
-
     return {
         "status": "healthy"
     }
 
 
-@app.post("/ask")
+@app.post(
+    "/ask",
+    response_model=AskResponse
+)
 def ask_question(request: QuestionRequest):
 
     result = rag_graph.invoke(
@@ -44,8 +54,8 @@ def ask_question(request: QuestionRequest):
         }
     )
 
-    return {
-        "question": request.question,
-        "answer": result["answer"],
-        "sources": result["sources"]
-    }
+    return AskResponse(
+        question=request.question,
+        answer=result["answer"],
+        sources=result["sources"]
+    )
