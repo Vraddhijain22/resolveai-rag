@@ -1,18 +1,18 @@
 from qdrant_client import QdrantClient
 from langchain_ollama import ChatOllama
 
+from app.config import (
+    VECTORSTORE_FOLDER,
+    COLLECTION_NAME,
+    RELEVANCE_THRESHOLD,
+    LLM_MODEL,
+)
+
 from app.embeddings.embedder import embeddings
 
 
-VECTORSTORE_FOLDER = "data/qdrant"
-
-COLLECTION_NAME = "policy_documents"
-
-RELEVANCE_THRESHOLD = 0.60
-
-
 llm = ChatOllama(
-    model="qwen2.5:3b",
+    model=LLM_MODEL,
     temperature=0
 )
 

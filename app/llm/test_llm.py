@@ -2,13 +2,13 @@ from langchain_ollama import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
 
 from app.llm.prompts import SYSTEM_PROMPT
+from app.config import LLM_MODEL
 
 
 llm = ChatOllama(
-    model="qwen2.5:3b",
+    model=LLM_MODEL,
     temperature=0
 )
-
 
 prompt = ChatPromptTemplate.from_messages([
     ("system", SYSTEM_PROMPT),
