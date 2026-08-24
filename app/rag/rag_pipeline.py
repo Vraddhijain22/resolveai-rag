@@ -4,7 +4,6 @@ from langchain_ollama import ChatOllama
 from app.config import (
     VECTORSTORE_FOLDER,
     COLLECTION_NAME,
-    RELEVANCE_THRESHOLD,
     LLM_MODEL,
 )
 
@@ -14,6 +13,12 @@ from app.embeddings.embedder import embeddings
 llm = ChatOllama(
     model=LLM_MODEL,
     temperature=0
+)
+
+
+INSUFFICIENT_MESSAGE = (
+    "I couldn't find sufficient information in the "
+    "available company knowledge base."
 )
 
 
@@ -50,25 +55,15 @@ def generate_answer(
     results
 ):
 
-    relevant_results = [
-        result
-        for result in results
-        if result.score >= RELEVANCE_THRESHOLD
-    ]
+    if not results:
 
-
-    if not relevant_results:
-
-        return (
-            "I couldn't find sufficient information in the "
-            "available company knowledge base."
-        )
+        return INSUFFICIENT_MESSAGE
 
 
     context_parts = []
 
 
-    for result in relevant_results:
+    for result in results:
 
         context_parts.append(
             f"""
@@ -95,7 +90,7 @@ Do not guess or invent information.
 If the provided knowledge does not contain enough information
 to answer the question, say:
 
-"I couldn't find sufficient information in the available company knowledge base."
+"{INSUFFICIENT_MESSAGE}"
 
 Keep the answer clear and concise.
 

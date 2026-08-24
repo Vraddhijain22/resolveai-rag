@@ -1,6 +1,7 @@
 from typing import TypedDict
 
 from langgraph.graph import StateGraph, START, END
+
 from app.config import RELEVANCE_THRESHOLD
 
 from app.rag.rag_pipeline import (
@@ -9,14 +10,17 @@ from app.rag.rag_pipeline import (
 )
 
 
-#RELEVANCE_THRESHOLD = 0.60
+INSUFFICIENT_MESSAGE = (
+    "I couldn't find sufficient information in the "
+    "available company knowledge base."
+)
 
 
 class RAGState(TypedDict):
     question: str
     results: list
     answer: str
-    sources: list[str]
+    sources: list[dict]
 
 
 def retrieve_node(state: RAGState):
@@ -32,11 +36,9 @@ def retrieve_node(state: RAGState):
 
 def check_relevance_node(state: RAGState):
 
-    results = state["results"]
-
     relevant_results = [
         result
-        for result in results
+        for result in state["results"]
         if result.score >= RELEVANCE_THRESHOLD
     ]
 
@@ -48,7 +50,6 @@ def check_relevance_node(state: RAGState):
 def route_after_relevance(state: RAGState):
 
     if state["results"]:
-
         return "generate"
 
     return "reject"
@@ -63,24 +64,17 @@ def generate_node(state: RAGState):
 
     sources = []
 
-    # Only attach sources when the LLM actually provides
-    # a knowledge-based answer.
-    insufficient_message = (
-        "I couldn't find sufficient information in the "
-        "available company knowledge base."
-    )
-
-    if answer.strip() != insufficient_message:
+    if answer.strip() != INSUFFICIENT_MESSAGE:
 
         for result in state["results"]:
 
-            source = (
-                f"{result.payload['source']}, "
-                f"Page {result.payload['page']}"
-            )
+            source = {
+                "document": result.payload["source"],
+                "page": result.payload["page"],
+                "score": round(result.score, 4)
+            }
 
             if source not in sources:
-
                 sources.append(source)
 
     return {
@@ -92,10 +86,7 @@ def generate_node(state: RAGState):
 def reject_node(state: RAGState):
 
     return {
-        "answer": (
-            "I couldn't find sufficient information in the "
-            "available company knowledge base."
-        ),
+        "answer": INSUFFICIENT_MESSAGE,
         "sources": []
     }
 
@@ -134,7 +125,6 @@ builder.add_edge(
     "check_relevance"
 )
 
-
 builder.add_conditional_edges(
     "check_relevance",
     route_after_relevance,
@@ -143,7 +133,6 @@ builder.add_conditional_edges(
         "reject": "reject",
     }
 )
-
 
 builder.add_edge(
     "generate",
