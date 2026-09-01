@@ -1,35 +1,56 @@
 from qdrant_client import QdrantClient
 
+from app.config import (
+    VECTORSTORE_FOLDER,
+    COLLECTION_NAME,
+)
+
 from app.embeddings.embedder import embeddings
 
 
-VECTORSTORE_FOLDER = "data/qdrant"
+# ============================================================
+# Search Configuration
+# ============================================================
 
-COLLECTION_NAME = "policy_documents"
+QUERY = "What should I do if I clicked a suspicious phishing link?"
 
+TOP_K = 3
+
+
+# ============================================================
+# Qdrant Search
+# ============================================================
 
 client = QdrantClient(
     path=VECTORSTORE_FOLDER
 )
 
+try:
 
-# query = "How long do I have to submit my travel expenses?"
-query = "What should I do if I clicked a suspicious phishing link?"
-query_vector = embeddings.embed_query(query)
+    query_vector = embeddings.embed_query(
+        QUERY
+    )
+
+    results = client.query_points(
+        collection_name=COLLECTION_NAME,
+        query=query_vector,
+        limit=TOP_K
+    ).points
+
+finally:
+
+    client.close()
 
 
-results = client.query_points(
-    collection_name=COLLECTION_NAME,
-    query=query_vector,
-    limit=3
-).points
-
+# ============================================================
+# Display Results
+# ============================================================
 
 print("\n" + "=" * 70)
 print("SEARCH QUERY")
 print("=" * 70)
 
-print(query)
+print(QUERY)
 
 
 print("\n" + "=" * 70)
@@ -42,16 +63,20 @@ for index, result in enumerate(results, start=1):
     print(f"\nResult {index}")
     print("-" * 70)
 
-    print(f"Score: {result.score}")
+    print(
+        f"Score: {result.score:.4f}"
+    )
 
-    print(f"Source: {result.payload['source']}")
+    print(
+        f"Source: {result.payload['source']}"
+    )
 
-    print(f"Page: {result.payload['page']}")
+    print(
+        f"Page: {result.payload['page']}"
+    )
 
     print("\nText:")
 
-    print(result.payload["text"])
-
-
-# Explicitly close Qdrant before the program exits
-client.close()
+    print(
+        result.payload["text"]
+    )
