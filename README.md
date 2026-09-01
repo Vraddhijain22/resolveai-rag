@@ -1,86 +1,160 @@
 # ResolveAI — Enterprise Knowledge Assistant
 
-ResolveAI is an AI-powered enterprise knowledge assistant built using Retrieval-Augmented Generation (RAG).
+🚀 **Live Demo:** https://resolveai-rag-project.streamlit.app/
 
-The system is designed to help employees find answers from internal company policies, SOPs, and troubleshooting documentation.
+ResolveAI is an AI-powered enterprise knowledge assistant built using
+**Retrieval-Augmented Generation (RAG)**.
 
-## Problem
+The system helps employees find answers from internal company policies,
+SOPs, and troubleshooting documentation through a simple conversational
+interface.
 
-Employees often need to search through multiple internal documents to find answers about:
+---
+
+## 🎯 Problem
+
+Employees often need to search through multiple internal documents to find
+answers about:
 
 - IT troubleshooting
 - Password management
 - Travel reimbursement
 - Expense approval
-- Remote work policies
-- Security and phishing procedures
+- Security procedures
+- Company policies
 
-ResolveAI aims to provide a conversational interface that retrieves relevant company information and generates grounded answers.
+ResolveAI provides a conversational interface that retrieves relevant
+information from company documents and generates grounded answers using an
+LLM.
 
-## Current Tech Stack
+---
 
-- Python
-- FastAPI
-- LangChain
-- Ollama
-- Qwen 2.5 3B
-- PyPDF
-- Git
-- GitHub
-
-## Current Pipeline
-
-PDF Documents
-    ↓
-Document Ingestion
-    ↓
-Text Extraction
-    ↓
-Text Chunking
-    ↓
-Prompt + Context
-    ↓
-Qwen 2.5 3B
-    ↓
-Grounded Response
-
-## Current Features
+## 🚀 Features
 
 - PDF document ingestion
 - Multi-document processing
-- PDF text extraction
-- Page and source metadata
-- Text chunking
-- Chunk overlap
-- Local LLM inference
-- LangChain integration
-- Prompt engineering
-- Basic grounding and hallucination testing
-
-## Planned Features
-
-- Embedding generation
-- Vector database using Qdrant
-- Semantic search
-- Top-K retrieval
-- Retrieval evaluation
-- RAG evaluation
-- LangGraph workflow
-- Query rewriting
-- Retrieval validation
-- Citation generation
-- FastAPI API
-- Streamlit frontend
-- Docker
+- PDF text extraction using PyPDF
+- Text chunking with overlap
+- Metadata tracking for document and page
+- Gemini-powered text embeddings
+- Semantic similarity search
+- Qdrant Cloud vector database
+- Top-K document retrieval
+- Relevance checking
+- Gemini-powered answer generation
+- Source document attribution
+- Page-level source information
+- Relevance scores
+- LangGraph-based RAG workflow
+- Interactive Streamlit interface
 - Cloud deployment
-- CI/CD
 
-## Project Architecture
+---
 
-Coming soon.
+## 🛠️ Tech Stack
 
-## Project Status
+- **Python**
+- **LangChain**
+- **LangGraph**
+- **Google Gemini**
+  - Gemini Embeddings
+  - Gemini LLM
+- **Qdrant Cloud**
+- **PyPDF**
+- **Streamlit**
+- **Git**
+- **GitHub**
 
-🚧 Work in progress.
+---
 
-This project is being built as a practical AI/LLM engineering portfolio project.
+## 🧠 RAG Pipeline
+
+   text
+PDF Documents
+      ↓
+Document Ingestion
+      ↓
+Text Extraction
+      ↓
+Text Chunking
+      ↓
+Gemini Embeddings
+      ↓
+Qdrant Cloud
+      ↓
+User Question
+      ↓
+Question Embedding
+      ↓
+Semantic Similarity Search
+      ↓
+Relevant Document Chunks
+      ↓
+Relevance Check
+      ↓
+Gemini LLM
+      ↓
+Grounded Answer
+      ↓
+Source + Page + Relevance Score
+
+---
+
+## 🏗️ Project Architecture
+
+                    ┌──────────────────────┐
+                    │    PDF Documents     │
+                    └──────────┬───────────┘
+                               ↓
+                    ┌──────────────────────┐
+                    │ Document Processing  │
+                    │      + Chunking      │
+                    └──────────┬───────────┘
+                               ↓
+                    ┌──────────────────────┐
+                    │  Gemini Embeddings   │
+                    └──────────┬───────────┘
+                               ↓
+                    ┌──────────────────────┐
+                    │    Qdrant Cloud      │
+                    │   Vector Database    │
+                    └──────────┬───────────┘
+                               │
+                               │ Retrieval
+                               ↓
+┌───────────────┐     ┌──────────────────────┐
+│ User Question │ ──→ │    LangGraph RAG     │
+└───────────────┘     │      Workflow        │
+                      └──────────┬───────────┘
+                                 ↓
+                      ┌──────────────────────┐
+                      │   Relevance Check    │
+                      └──────────┬───────────┘
+                                 ↓
+                      ┌──────────────────────┐
+                      │      Gemini LLM      │
+                      └──────────┬───────────┘
+                                 ↓
+                      ┌──────────────────────┐
+                      │ Answer + Sources     │
+                      └──────────────────────┘
+
+
+---
+
+## ☁️ Deployment
+
+The application is deployed using Streamlit Cloud.
+
+---
+
+## 🔮 Future Improvements
+
+- Conversation history
+- Better search results
+- Support for more documents
+- User login
+- Better answer formatting
+- Error handling and logging
+- Docker support
+- CI/CD automation
