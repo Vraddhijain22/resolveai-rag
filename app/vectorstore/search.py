@@ -1,3 +1,5 @@
+import time
+
 from qdrant_client import QdrantClient
 
 from app.config import (
@@ -8,75 +10,63 @@ from app.config import (
 from app.embeddings.embedder import embeddings
 
 
-# ============================================================
-# Search Configuration
-# ============================================================
+def search_documents(
+    query: str,
+    top_k: int = 3,
+    max_retries: int = 3
+):
+    """
+    Search the Qdrant vector store using Gemini embeddings.
 
-QUERY = "What should I do if I clicked a suspicious phishing link?"
+    Retries the embedding request if Gemini temporarily
+    returns a rate-limit (429) error.
+    """
 
-TOP_K = 3
+    query_vector = None
 
+    for attempt in range(max_retries):
 
-# ============================================================
-# Qdrant Search
-# ============================================================
+        try:
 
-client = QdrantClient(
-    path=VECTORSTORE_FOLDER
-)
+            query_vector = embeddings.embed_query(
+                query
+            )
 
-try:
+            break
 
-    query_vector = embeddings.embed_query(
-        QUERY
+        except Exception as error:
+
+            if "429" not in str(error):
+
+                raise
+
+            if attempt == max_retries - 1:
+
+                raise
+
+            wait_time = 5 * (attempt + 1)
+
+            print(
+                f"Gemini rate limit reached. "
+                f"Retrying in {wait_time} seconds..."
+            )
+
+            time.sleep(wait_time)
+
+    client = QdrantClient(
+        path=str(VECTORSTORE_FOLDER)
     )
 
-    results = client.query_points(
-        collection_name=COLLECTION_NAME,
-        query=query_vector,
-        limit=TOP_K
-    ).points
+    try:
 
-finally:
+        results = client.query_points(
+            collection_name=COLLECTION_NAME,
+            query=query_vector,
+            limit=top_k
+        ).points
 
-    client.close()
+        return results
 
+    finally:
 
-# ============================================================
-# Display Results
-# ============================================================
-
-print("\n" + "=" * 70)
-print("SEARCH QUERY")
-print("=" * 70)
-
-print(QUERY)
-
-
-print("\n" + "=" * 70)
-print("SEARCH RESULTS")
-print("=" * 70)
-
-
-for index, result in enumerate(results, start=1):
-
-    print(f"\nResult {index}")
-    print("-" * 70)
-
-    print(
-        f"Score: {result.score:.4f}"
-    )
-
-    print(
-        f"Source: {result.payload['source']}"
-    )
-
-    print(
-        f"Page: {result.payload['page']}"
-    )
-
-    print("\nText:")
-
-    print(
-        result.payload["text"]
-    )
+        client.close()

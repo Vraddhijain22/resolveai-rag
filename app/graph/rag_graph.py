@@ -4,17 +4,23 @@ from langgraph.graph import StateGraph, START, END
 
 from app.config import RELEVANCE_THRESHOLD
 
-from app.rag.rag_pipeline import (
-    retrieve_documents,
-    generate_answer,
-)
+from app.rag.rag_pipeline import generate_answer
+from app.vectorstore.search import search_documents
 
+
+# ============================================================
+# Constants
+# ============================================================
 
 INSUFFICIENT_MESSAGE = (
     "I couldn't find sufficient information in the "
     "available company knowledge base."
 )
 
+
+# ============================================================
+# Graph State
+# ============================================================
 
 class RAGState(TypedDict):
     question: str
@@ -23,16 +29,25 @@ class RAGState(TypedDict):
     sources: list[dict]
 
 
+# ============================================================
+# Retrieve Node
+# ============================================================
+
 def retrieve_node(state: RAGState):
 
-    results = retrieve_documents(
-        state["question"]
+    results = search_documents(
+        state["question"],
+        top_k=1
     )
 
     return {
         "results": results
     }
 
+
+# ============================================================
+# Relevance Check Node
+# ============================================================
 
 def check_relevance_node(state: RAGState):
 
@@ -47,6 +62,10 @@ def check_relevance_node(state: RAGState):
     }
 
 
+# ============================================================
+# Conditional Routing
+# ============================================================
+
 def route_after_relevance(state: RAGState):
 
     if state["results"]:
@@ -54,6 +73,10 @@ def route_after_relevance(state: RAGState):
 
     return "reject"
 
+
+# ============================================================
+# Generate Answer Node
+# ============================================================
 
 def generate_node(state: RAGState):
 
@@ -83,6 +106,10 @@ def generate_node(state: RAGState):
     }
 
 
+# ============================================================
+# Reject Node
+# ============================================================
+
 def reject_node(state: RAGState):
 
     return {
@@ -91,8 +118,14 @@ def reject_node(state: RAGState):
     }
 
 
+# ============================================================
+# Build LangGraph
+# ============================================================
+
 builder = StateGraph(RAGState)
 
+
+# Add nodes
 
 builder.add_node(
     "retrieve",
@@ -114,6 +147,10 @@ builder.add_node(
     reject_node
 )
 
+
+# ============================================================
+# Graph Flow
+# ============================================================
 
 builder.add_edge(
     START,
@@ -144,5 +181,9 @@ builder.add_edge(
     END
 )
 
+
+# ============================================================
+# Compile Graph
+# ============================================================
 
 rag_graph = builder.compile()

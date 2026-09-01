@@ -78,12 +78,14 @@ GEMINI_EMBEDDING_MODEL = os.getenv(
 COLLECTION_NAME = os.getenv(
     "COLLECTION_NAME",
     "policy_documents"
+    if EMBEDDING_PROVIDER == "ollama"
+    else "policy_documents_gemini"
 )
 
 VECTOR_SIZE = int(
     os.getenv(
         "VECTOR_SIZE",
-        "768"
+        "768" if EMBEDDING_PROVIDER == "ollama" else "3072"
     )
 )
 
