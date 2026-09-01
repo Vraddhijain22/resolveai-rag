@@ -1,7 +1,23 @@
 import sys
+import os
 from pathlib import Path
 
 import streamlit as st
+
+
+# ============================================================
+# STREAMLIT CLOUD SECRETS
+# ============================================================
+
+# Make Streamlit Cloud secrets available through os.getenv()
+# so the existing app/config.py continues to work.
+
+if hasattr(st, "secrets"):
+
+    for key, value in st.secrets.items():
+
+        if isinstance(value, (str, int, float, bool)):
+            os.environ[key] = str(value)
 
 
 # ============================================================
@@ -12,6 +28,11 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
+
+
+# IMPORTANT:
+# Import rag_graph ONLY AFTER loading Streamlit secrets.
+
 
 
 from app.graph.rag_graph import rag_graph
