@@ -1,21 +1,36 @@
-import requests
+import sys
+from pathlib import Path
+
 import streamlit as st
 
 
-API_URL = "http://127.0.0.1:8000/ask"
-HEALTH_URL = "http://127.0.0.1:8000/health"
+# ============================================================
+# PROJECT ROOT
+# ============================================================
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+
+from app.graph.rag_graph import rag_graph
+
+
+# ============================================================
+# PAGE CONFIG
+# ============================================================
 
 st.set_page_config(
     page_title="ResolveAI",
     page_icon="🤖",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
 )
 
 
 # ============================================================
-# Styling
+# CUSTOM CSS
 # ============================================================
 
 st.markdown(
@@ -30,29 +45,29 @@ st.markdown(
 
     .hero {
         text-align: center;
-        padding: 2rem 0 1.5rem 0;
+        padding: 1.5rem 0 2rem 0;
     }
 
     .hero-title {
-        font-size: 3.5rem;
+        font-size: 3.2rem;
         font-weight: 800;
         letter-spacing: -2px;
-        margin-bottom: 0.3rem;
+        margin-bottom: 0.4rem;
     }
 
     .hero-subtitle {
-        font-size: 1.15rem;
-        opacity: 0.7;
+        font-size: 1.1rem;
+        opacity: 0.65;
     }
 
     </style>
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
 
 
 # ============================================================
-# Session State
+# SESSION STATE
 # ============================================================
 
 if "question" not in st.session_state:
@@ -63,16 +78,14 @@ if "answer_data" not in st.session_state:
 
 
 # ============================================================
-# Sidebar
+# SIDEBAR
 # ============================================================
 
 with st.sidebar:
 
     st.markdown("## 🤖 ResolveAI")
 
-    st.caption(
-        "Enterprise Knowledge Assistant"
-    )
+    st.caption("Enterprise Knowledge Assistant")
 
     st.divider()
 
@@ -88,44 +101,28 @@ with st.sidebar:
     st.markdown("### Architecture")
 
     st.markdown(
-    """
-    **FastAPI**  
-    ↓  
-    **LangGraph**  
-    ↓  
-    **Gemini Embeddings**  
-    ↓  
-    **Qdrant Vector Search**  
-    ↓  
-    **Relevance Check**  
-    ↓  
-    **Gemini LLM**
-    """
-)
+        """
+        **Streamlit**  
+        ↓  
+        **LangGraph**  
+        ↓  
+        **Gemini Embeddings**  
+        ↓  
+        **Qdrant Cloud**  
+        ↓  
+        **Relevance Check**  
+        ↓  
+        **Gemini LLM**
+        """
+    )
 
     st.divider()
 
-    st.markdown("### API Status")
-
-    try:
-
-        health_response = requests.get(
-            HEALTH_URL,
-            timeout=5
-        )
-
-        if health_response.status_code == 200:
-            st.success("Backend connected")
-        else:
-            st.error("Backend unavailable")
-
-    except requests.exceptions.RequestException:
-
-        st.error("Backend unavailable")
+    st.success("Qdrant Cloud connected")
 
 
 # ============================================================
-# Hero
+# HERO
 # ============================================================
 
 st.markdown(
@@ -137,15 +134,12 @@ st.markdown(
         </div>
     </div>
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
 
 
-st.divider()
-
-
 # ============================================================
-# Example Questions
+# EXAMPLE QUESTIONS
 # ============================================================
 
 st.markdown("### 💡 Try an example")
@@ -159,7 +153,7 @@ example_questions = {
         "What is the password policy?",
 
     "VPN troubleshooting":
-        "How do I troubleshoot VPN access?"
+        "How do I troubleshoot VPN access?",
 }
 
 
@@ -170,7 +164,8 @@ with col1:
 
     if st.button(
         "Travel expenses",
-        use_container_width=True
+        use_container_width=True,
+        key="travel_button",
     ):
 
         st.session_state.question = (
@@ -179,12 +174,15 @@ with col1:
 
         st.session_state.answer_data = None
 
+        st.rerun()
+
 
 with col2:
 
     if st.button(
         "Password policy",
-        use_container_width=True
+        use_container_width=True,
+        key="password_button",
     ):
 
         st.session_state.question = (
@@ -193,12 +191,15 @@ with col2:
 
         st.session_state.answer_data = None
 
+        st.rerun()
+
 
 with col3:
 
     if st.button(
         "VPN troubleshooting",
-        use_container_width=True
+        use_container_width=True,
+        key="vpn_button",
     ):
 
         st.session_state.question = (
@@ -207,35 +208,38 @@ with col3:
 
         st.session_state.answer_data = None
 
+        st.rerun()
+
 
 # ============================================================
-# Question Input
+# QUESTION
 # ============================================================
 
 st.markdown("### 💬 Ask ResolveAI")
 
 
 question = st.text_area(
-    "Your question",
+    "Question",
     key="question",
     placeholder="Ask a question about company policies...",
     height=120,
-    label_visibility="collapsed"
+    label_visibility="collapsed",
 )
 
 
-ask_button = st.button(
+# ============================================================
+# ASK BUTTON
+# ============================================================
+
+if st.button(
     "Ask ResolveAI",
     type="primary",
-    use_container_width=True
-)
+    use_container_width=True,
+    key="ask_button",
+):
 
-
-# ============================================================
-# API Request
-# ============================================================
-
-if ask_button:
+    # Clear previous answer
+    st.session_state.answer_data = None
 
     if not question.strip():
 
@@ -251,62 +255,47 @@ if ask_button:
 
             try:
 
-                response = requests.post(
-                    API_URL,
-                    json={
-                        "question": question.strip()
-                    },
-                    timeout=120
+                result = rag_graph.invoke(
+                    {
+                        "question": question.strip(),
+                        "results": [],
+                        "answer": "",
+                        "sources": [],
+                    }
                 )
 
+                st.session_state.answer_data = {
+                    "question": question.strip(),
+                    "answer": result["answer"],
+                    "sources": result["sources"],
+                }
 
-                if response.status_code == 200:
+                st.rerun()
 
-                    st.session_state.answer_data = (
-                        response.json()
+            except Exception as error:
+
+                error_message = str(error)
+
+                st.error(
+                    "Unable to process your question."
+                )
+
+                if "RESOURCE_EXHAUSTED" in error_message:
+
+                    st.warning(
+                        "Gemini embedding quota has been reached. "
+                        "Please wait and try again."
                     )
 
                 else:
 
-                    try:
-
-                        detail = response.json().get(
-                            "detail",
-                            "Unable to process the request."
-                        )
-
-                    except Exception:
-
-                        detail = (
-                            "Unable to process the request."
-                        )
-
-                    st.error(
-                        f"API Error: {detail}"
+                    st.caption(
+                        f"Error: {error_message}"
                     )
-
-            except requests.exceptions.ConnectionError:
-
-                st.error(
-                    "Unable to connect to the ResolveAI backend. "
-                    "Please make sure FastAPI is running."
-                )
-
-            except requests.exceptions.Timeout:
-
-                st.error(
-                    "The request timed out. Please try again."
-                )
-
-            except Exception as error:
-
-                st.error(
-                    f"Unexpected error: {error}"
-                )
 
 
 # ============================================================
-# Display Answer
+# DISPLAY ANSWER
 # ============================================================
 
 if st.session_state.answer_data:
@@ -314,9 +303,9 @@ if st.session_state.answer_data:
     data = st.session_state.answer_data
 
 
-    # --------------------------------------------------------
-    # Answer
-    # --------------------------------------------------------
+    # ========================================================
+    # ANSWER
+    # ========================================================
 
     st.markdown("### 🧠 Answer")
 
@@ -327,9 +316,9 @@ if st.session_state.answer_data:
         )
 
 
-    # --------------------------------------------------------
-    # Sources
-    # --------------------------------------------------------
+    # ========================================================
+    # SOURCES
+    # ========================================================
 
     if data.get("sources"):
 
@@ -339,7 +328,9 @@ if st.session_state.answer_data:
         for source in data["sources"]:
 
             document = source["document"]
+
             page = source["page"]
+
             score = source["score"]
 
 
@@ -366,6 +357,7 @@ if st.session_state.answer_data:
                         f"Relevance {score:.4f}"
                     )
 
+
     else:
 
         st.info(
@@ -375,11 +367,10 @@ if st.session_state.answer_data:
 
 
 # ============================================================
-# Footer
+# FOOTER
 # ============================================================
 
 st.divider()
-
 
 st.caption(
     "ResolveAI • AI-powered enterprise knowledge assistant"

@@ -3,9 +3,10 @@ from qdrant_client.models import Distance, PointStruct, VectorParams
 
 from app.config import (
     DOCUMENTS_FOLDER,
-    VECTORSTORE_FOLDER,
     COLLECTION_NAME,
     VECTOR_SIZE,
+    QDRANT_URL,
+    QDRANT_API_KEY,
 )
 
 from app.embeddings.embedder import embeddings
@@ -13,32 +14,59 @@ from app.rag.document_loader import load_pdf
 from app.rag.chunker import chunk_text
 
 
-pdf_files = list(DOCUMENTS_FOLDER.glob("*.pdf"))
+# ============================================================
+# PDF DOCUMENTS
+# ============================================================
 
-print(f"Found {len(pdf_files)} PDF documents.")
+pdf_files = list(
+    DOCUMENTS_FOLDER.glob("*.pdf")
+)
 
-
-client = QdrantClient(
-    path=str(VECTORSTORE_FOLDER)
+print(
+    f"Found {len(pdf_files)} PDF documents."
 )
 
 
-if not client.collection_exists(COLLECTION_NAME):
+# ============================================================
+# QDRANT CLOUD
+# ============================================================
+
+client = QdrantClient(
+    url=QDRANT_URL,
+    api_key=QDRANT_API_KEY,
+)
+
+
+# ============================================================
+# COLLECTION
+# ============================================================
+
+if not client.collection_exists(
+    COLLECTION_NAME
+):
 
     client.create_collection(
         collection_name=COLLECTION_NAME,
         vectors_config=VectorParams(
             size=VECTOR_SIZE,
-            distance=Distance.COSINE
-        )
+            distance=Distance.COSINE,
+        ),
     )
 
-    print(f"Created collection: {COLLECTION_NAME}")
+    print(
+        f"Created collection: {COLLECTION_NAME}"
+    )
 
 else:
 
-    print(f"Collection already exists: {COLLECTION_NAME}")
+    print(
+        f"Collection already exists: {COLLECTION_NAME}"
+    )
 
+
+# ============================================================
+# LOAD AND CHUNK DOCUMENTS
+# ============================================================
 
 all_chunks = []
 
@@ -46,36 +74,56 @@ all_chunks = []
 for pdf_file in pdf_files:
 
     print("\n" + "=" * 70)
-    print(f"Processing: {pdf_file.name}")
+    print(
+        f"Processing: {pdf_file.name}"
+    )
 
-    pages = load_pdf(str(pdf_file))
+    pages = load_pdf(
+        str(pdf_file)
+    )
 
-    print(f"Pages extracted: {len(pages)}")
+    print(
+        f"Pages extracted: {len(pages)}"
+    )
 
     for page in pages:
 
-        chunks = chunk_text(page["text"])
+        chunks = chunk_text(
+            page["text"]
+        )
 
         for chunk in chunks:
 
-            all_chunks.append({
-                "text": chunk,
-                "source": page["source"],
-                "page": page["page"]
-            })
+            all_chunks.append(
+                {
+                    "text": chunk,
+                    "source": page["source"],
+                    "page": page["page"],
+                }
+            )
 
 
 print("\n" + "=" * 70)
-print(f"Total chunks created: {len(all_chunks)}")
 
+print(
+    f"Total chunks created: {len(all_chunks)}"
+)
+
+
+# ============================================================
+# CREATE GEMINI EMBEDDINGS AND UPLOAD
+# ============================================================
 
 print("\nCreating embeddings...")
 
 
-for index, chunk in enumerate(all_chunks):
+for index, chunk in enumerate(
+    all_chunks
+):
 
     print(
-        f"Embedding chunk {index + 1}/{len(all_chunks)}"
+        f"Embedding chunk "
+        f"{index + 1}/{len(all_chunks)}"
     )
 
     vector = embeddings.embed_query(
@@ -88,24 +136,36 @@ for index, chunk in enumerate(all_chunks):
         payload={
             "text": chunk["text"],
             "source": chunk["source"],
-            "page": chunk["page"]
-        }
+            "page": chunk["page"],
+        },
     )
 
     client.upsert(
         collection_name=COLLECTION_NAME,
-        points=[point]
+        points=[point],
     )
 
 
+# ============================================================
+# VERIFY
+# ============================================================
+
 print("\n" + "=" * 70)
-print("Vector store creation completed successfully.")
+
+print(
+    "Vector store creation completed successfully."
+)
 
 
 collection_info = client.get_collection(
     COLLECTION_NAME
 )
 
+
 print(
-    f"Vectors stored: {collection_info.points_count}"
+    f"Vectors stored: "
+    f"{collection_info.points_count}"
 )
+
+
+client.close()
