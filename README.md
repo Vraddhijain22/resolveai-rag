@@ -97,6 +97,7 @@ Gemini LLM
 Grounded Answer
       ↓
 Source + Page + Relevance Score
+```
 
 ---
 
@@ -147,11 +148,13 @@ Source + Page + Relevance Score
                       │ Answer + Sources    │
                       └─────────────────────┘
 
+```
+
 ---
 
 ## ☁️ Deployment
 
-The application is deployed using Streamlit Cloud.
+The application is deployed using **Streamlit Cloud**.
 
 ---
 
@@ -165,3 +168,22 @@ The application is deployed using Streamlit Cloud.
 - Error handling and logging
 - Docker support
 - CI/CD automation
+
+
+## 📌 Project Status
+
+✅ RAG pipeline implemented  
+✅ Gemini embeddings integrated  
+✅ Qdrant Cloud integrated  
+✅ Semantic retrieval implemented  
+✅ Relevance checking implemented  
+✅ LangGraph workflow implemented  
+✅ Streamlit frontend implemented  
+✅ Source attribution implemented  
+✅ Cloud deployment completed  
+
+---
+
+## 👩‍💻 Author
+
+**Vraddhi Jain**
