@@ -1,20 +1,48 @@
 from qdrant_client import QdrantClient
+
 from langchain_ollama import ChatOllama
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 from app.config import (
     VECTORSTORE_FOLDER,
     COLLECTION_NAME,
+    LLM_PROVIDER,
     LLM_MODEL,
+    GEMINI_API_KEY,
+    GEMINI_LLM_MODEL,
 )
 
 from app.embeddings.embedder import embeddings
 
 
-llm = ChatOllama(
-    model=LLM_MODEL,
-    temperature=0
-)
+# ============================================================
+# LLM PROVIDER
+# ============================================================
 
+if LLM_PROVIDER == "ollama":
+
+    llm = ChatOllama(
+        model=LLM_MODEL,
+        temperature=0
+    )
+
+elif LLM_PROVIDER == "gemini":
+
+    llm = ChatGoogleGenerativeAI(
+        model=GEMINI_LLM_MODEL,
+        google_api_key=GEMINI_API_KEY,
+    )
+
+else:
+
+    raise ValueError(
+        f"Unsupported LLM provider: {LLM_PROVIDER}"
+    )
+
+
+# ============================================================
+# Constants
+# ============================================================
 
 INSUFFICIENT_MESSAGE = (
     "I couldn't find sufficient information in the "
@@ -22,13 +50,17 @@ INSUFFICIENT_MESSAGE = (
 )
 
 
+# ============================================================
+# RETRIEVAL
+# ============================================================
+
 def retrieve_documents(
     question: str,
     top_k: int = 3
 ):
 
     client = QdrantClient(
-        path=VECTORSTORE_FOLDER
+        path=str(VECTORSTORE_FOLDER)
     )
 
     try:
@@ -50,6 +82,10 @@ def retrieve_documents(
         client.close()
 
 
+# ============================================================
+# GENERATE ANSWER
+# ============================================================
+
 def generate_answer(
     question: str,
     results
@@ -59,9 +95,7 @@ def generate_answer(
 
         return INSUFFICIENT_MESSAGE
 
-
     context_parts = []
-
 
     for result in results:
 
@@ -74,9 +108,7 @@ Page: {result.payload['page']}
 """
         )
 
-
     context = "\n".join(context_parts)
-
 
     prompt = f"""
 You are ResolveAI, an enterprise knowledge assistant.
@@ -87,8 +119,8 @@ Do not use outside knowledge.
 
 Do not guess or invent information.
 
-If the provided knowledge does not contain enough information
-to answer the question, say:
+If the provided knowledge does not contain enough information,
+say exactly:
 
 "{INSUFFICIENT_MESSAGE}"
 
@@ -107,11 +139,32 @@ USER QUESTION:
 ANSWER:
 """
 
-
     response = llm.invoke(prompt)
+
+    # Gemini can return structured content blocks.
+    if isinstance(response.content, list):
+
+        text_parts = []
+
+        for item in response.content:
+
+            if (
+                isinstance(item, dict)
+                and item.get("type") == "text"
+            ):
+
+                text_parts.append(
+                    item.get("text", "")
+                )
+
+        return "\n".join(text_parts).strip()
 
     return response.content
 
+
+# ============================================================
+# COMPLETE RAG PIPELINE
+# ============================================================
 
 def ask_question(
     question: str

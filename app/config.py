@@ -1,6 +1,9 @@
 from pathlib import Path
 import os
 
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # ============================================================
 # Project paths
@@ -14,7 +17,27 @@ VECTORSTORE_FOLDER = BASE_DIR / "data" / "qdrant"
 
 
 # ============================================================
-# Models
+# Providers
+# ============================================================
+
+LLM_PROVIDER = os.getenv(
+    "LLM_PROVIDER",
+    "ollama"
+)
+
+EMBEDDING_PROVIDER = os.getenv(
+    "EMBEDDING_PROVIDER",
+    "ollama"
+)
+
+VECTORSTORE_PROVIDER = os.getenv(
+    "VECTORSTORE_PROVIDER",
+    "local"
+)
+
+
+# ============================================================
+# Local Ollama models
 # ============================================================
 
 LLM_MODEL = os.getenv(
@@ -25,6 +48,26 @@ LLM_MODEL = os.getenv(
 EMBEDDING_MODEL = os.getenv(
     "EMBEDDING_MODEL",
     "nomic-embed-text"
+)
+
+
+# ============================================================
+# Gemini
+# ============================================================
+
+GEMINI_API_KEY = os.getenv(
+    "GEMINI_API_KEY",
+    ""
+)
+
+GEMINI_LLM_MODEL = os.getenv(
+    "GEMINI_LLM_MODEL",
+    "gemini-3.6-flash"
+)
+
+GEMINI_EMBEDDING_MODEL = os.getenv(
+    "GEMINI_EMBEDDING_MODEL",
+    "gemini-embedding-001"
 )
 
 
@@ -42,6 +85,16 @@ VECTOR_SIZE = int(
         "VECTOR_SIZE",
         "768"
     )
+)
+
+QDRANT_URL = os.getenv(
+    "QDRANT_URL",
+    ""
+)
+
+QDRANT_API_KEY = os.getenv(
+    "QDRANT_API_KEY",
+    ""
 )
 
 
