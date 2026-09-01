@@ -88,18 +88,20 @@ with st.sidebar:
     st.markdown("### Architecture")
 
     st.markdown(
-        """
-        **FastAPI**  
-        ↓  
-        **LangGraph**  
-        ↓  
-        **Qdrant Vector Search**  
-        ↓  
-        **Relevance Check**  
-        ↓  
-        **Qwen LLM**
-        """
-    )
+    """
+    **FastAPI**  
+    ↓  
+    **LangGraph**  
+    ↓  
+    **Gemini Embeddings**  
+    ↓  
+    **Qdrant Vector Search**  
+    ↓  
+    **Relevance Check**  
+    ↓  
+    **Gemini LLM**
+    """
+)
 
     st.divider()
 
