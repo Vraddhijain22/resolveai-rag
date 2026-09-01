@@ -169,6 +169,7 @@ The application is deployed using **Streamlit Cloud**.
 - Docker support
 - CI/CD automation
 
+---
 
 ## 📌 Project Status
 
