@@ -5,6 +5,10 @@ from pydantic import BaseModel, Field
 from app.graph.rag_graph import rag_graph
 
 
+# ============================================================
+# FastAPI Application
+# ============================================================
+
 app = FastAPI(
     title="ResolveAI",
     description="AI-powered enterprise knowledge assistant",
@@ -12,8 +16,13 @@ app = FastAPI(
 )
 
 
-# Allow the frontend to communicate with the API.
-# This is open during local development.
+# ============================================================
+# CORS
+# ============================================================
+
+# Open CORS for local frontend development.
+# This will be restricted before production deployment.
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -22,6 +31,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+# ============================================================
+# Request / Response Models
+# ============================================================
 
 class QuestionRequest(BaseModel):
 
@@ -46,6 +59,10 @@ class AskResponse(BaseModel):
     sources: list[Source]
 
 
+# ============================================================
+# Health / Root Endpoints
+# ============================================================
+
 @app.get("/")
 def root():
 
@@ -62,17 +79,30 @@ def health():
     }
 
 
+# ============================================================
+# Ask Endpoint
+# ============================================================
+
 @app.post(
     "/ask",
     response_model=AskResponse
 )
 def ask_question(request: QuestionRequest):
 
+    question = request.question.strip()
+
+    if not question:
+
+        raise HTTPException(
+            status_code=400,
+            detail="Question cannot be empty."
+        )
+
     try:
 
         result = rag_graph.invoke(
             {
-                "question": request.question,
+                "question": question,
                 "results": [],
                 "answer": "",
                 "sources": []
@@ -80,12 +110,16 @@ def ask_question(request: QuestionRequest):
         )
 
         return AskResponse(
-            question=request.question,
+            question=question,
             answer=result["answer"],
             sources=result["sources"]
         )
 
     except Exception as error:
+
+        print(
+            f"Error processing question: {error}"
+        )
 
         raise HTTPException(
             status_code=500,
